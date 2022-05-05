@@ -2,11 +2,9 @@
 DistributedFederatedGAN
 
 
-Using Tensorflow, Ray, Python
+Project for research project.
 
-for research project
-
-based on  https://arxiv.org/abs/1811.03850
+This uses tensorflow, pytorch, mpi4py and Ray. This project is an adaptation of https://arxiv.org/abs/1811.03850
 
 Implementation of unique architure with FedAvg and MDGan alg:
 
@@ -25,5 +23,5 @@ usage:
     - run main file in DistributedGanTensorflow
 
 
-Final Result (1 disc, 1 gen, 1 FL):
-    ![architecture](./results/batch12.png) 
+**Final Result for 1 discriminator and 1 generator with Federated Leanring server**
+   ![architecture](./results/batch12.png) 
