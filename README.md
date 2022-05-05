@@ -1,16 +1,19 @@
 # DistributedGAN
-DistributedFederatedGAN
+
+_This project is an adaptation of https://arxiv.org/abs/1811.03850_
+
+**Software**
+- tensorflow
+- pytorch
+- mpi4py
+- Ray. 
 
 
-Project for research project.
+**Dataset**
+- Minst
+- Eminst
+- Cifar10
 
-This uses tensorflow, pytorch, mpi4py and Ray. This project is an adaptation of https://arxiv.org/abs/1811.03850
-
-Implementation of unique architure with FedAvg and MDGan alg:
-
-![architecture](./architecture/FLGAN.png)
-    
-![architecture](./architecture/MDGAN.png)
 
 usage:
 
@@ -23,5 +26,11 @@ usage:
     - run main file in DistributedGanTensorflow
 
 
-**Final Result for 1 discriminator and 1 generator with Federated Leanring server**
-   ![architecture](./results/batch12.png) 
+
+# Architecture
+
+![architecture](./architecture/FLGAN.png)
+    
+![architecture](./architecture/MDGAN.png)
+
+
