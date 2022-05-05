@@ -3,9 +3,9 @@
 _This project is an adaptation of https://arxiv.org/abs/1811.03850_
 
 **Software**
-- tensorflow
-- pytorch
-- mpi4py
+- Tensorflow
+- Pytorch
+- Mpi4py
 - Ray. 
 
 
