@@ -1,12 +1,12 @@
-import math
 import os
 
 import numpy as np
 import ray
 import tensorflow as tf
-from matplotlib import pyplot as plt
 from tensorflow import keras as k
 from tensorflow.keras.preprocessing import image
+
+from HelperUtils.tf_utils import plot_images
 
 
 class Data(object):
@@ -24,6 +24,7 @@ class Data(object):
     def __init__(self):
         self.real_data = None
         self.load_mnist()
+
 
 class C(object):
     @staticmethod
@@ -88,6 +89,7 @@ class C(object):
     image_width = 28
     noise_dimension = 100
 
+    gan_size = 3
     batch_size = 64
     learning_rate = 2e-4
     decay = 6e-8
@@ -161,24 +163,6 @@ class Gan(object):
         image_arrays = self.generator.predict(x=noise)
 
         return image_arrays
-
-
-def plot_images(fake_images, generator_path, iteration_nmr):
-    plt.figure(figsize=(5, 5))
-    num_images = fake_images.shape[0]
-
-    image_size = fake_images.shape[1]
-    rows = int(math.sqrt(fake_images.shape[0]))
-
-
-    os.makedirs(generator_path + "/batches", exist_ok=True)
-    for j in range(num_images):
-        plt.subplot(rows, rows + 1, j + 1)
-        pltimg = np.reshape(fake_images[j], [image_size, image_size])
-        plt.imshow(pltimg, cmap='gray')
-        plt.axis('off')
-
-    plt.savefig(generator_path + "/batches/batch" + str(iteration_nmr) + ".png")
 
 
 class DistributedGan(object):
@@ -324,7 +308,7 @@ def main():
 
     discriminator_size = 1
 
-    distribution_size = 1  #Change this for each client
+    distribution_size = 2  # Change this for each client
 
     iteration_size = 100
 
@@ -339,11 +323,6 @@ def main():
             print('iteration', i)
 
         batch_indexes = np.array_split(np.random.permutation(len(real_data)), int(len(real_data) / C.batch_size))
-
-        ray.util.iter.from_items(batch_indexes,num_shards=2)
-
-
-
         for batch_index in batch_indexes:
             multi_distributed_gan.train_on_batch_index(batch_index)
 
