@@ -204,6 +204,8 @@ class DistributedGan(object):
             pass
 
         self.generator.save_weights(generator_path + '/weights.h5')
+        self.discriminator.save(generator_path +'/model')
+
         with open(generator_path + '/architecture.json', 'w') as f:
             f.write(self.generator.to_json())
         k.utils.plot_model(self.generator, generator_path + '/graph.png', show_shapes=True)
@@ -231,6 +233,7 @@ class DistributedGan(object):
             pass
 
         self.discriminator.save_weights(discriminator_path + '/weights.h5')
+        self.discriminator.save(discriminator_path +'/model')
         with open(discriminator_path + '/architecture.json', 'w') as f:
             f.write(self.discriminator.to_json())
         k.utils.plot_model(self.discriminator, discriminator_path + '/graph.png', show_shapes=True)
