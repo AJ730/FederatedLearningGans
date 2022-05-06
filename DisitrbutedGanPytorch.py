@@ -1,9 +1,4 @@
 # Deep Convolutional GANs
-import random
-from time import sleep
-
-import matplotlib.pyplot as plt
-import numpy as np
 
 import torch
 import torch.nn as nn
@@ -12,12 +7,11 @@ import torch.utils.data
 import torchvision.datasets as dset
 import torchvision.transforms as transforms
 from mpi4py import MPI
-from mpi4py.MPI import COMM_WORLD
 from torch import optim
 from torch.autograd import Variable
-from torch.utils.data import TensorDataset, random_split
+from torch.utils.data import random_split
 import torchvision.utils as vutils
-import utils
+from HelperUtils import py_utils
 import dill
 
 
@@ -180,7 +174,7 @@ if __name__ == '__main__':
         dataset = comm.recv(source=MPI.ANY_SOURCE, tag=1)
         dataloader = torch.utils.data.DataLoader(dataset, shuffle=True, batch_size=batch_size)
 
-        util = utils.Util(dataset, dataloader)
+        util = py_utils.Util(dataset, dataloader)
         device = util.get_default_device()
         print("using:", device, flush=True)
 
@@ -229,7 +223,7 @@ if __name__ == '__main__':
 
 
             assert (dataloader is not None)
-            for i, data in enumerate(dataloader, 16668):
+            for i, data in enumerate(dataloader, 0):
 
                 print("batch", i, flush=True)
                 # 1st Step: Updating the weights of the neural network of the discriminator

@@ -1,14 +1,11 @@
-import math
-import multiprocessing
 import os
-from multiprocessing import Pool
 
-import numpy as np
 
-from matplotlib import pyplot as plt
 from tensorflow import keras as k
 import tensorflow as tf
 from keras.preprocessing import image
+
+from HelperUtils.tf_utils import *
 
 configuration = tf.compat.v1.ConfigProto()
 configuration.gpu_options.allow_growth = True
@@ -19,6 +16,7 @@ class Data(object):
     def load_mnist(self):
         (real_data, _), (_, _) = tf.keras.datasets.mnist.load_data()
         # Make it 3D dataset
+        real_data = real_data[:10000].astype('float32')
         real_data = np.reshape(real_data, [-1, C.image_width, C.image_width, 1])
         # Standardize data : 0 to 1
         real_data = real_data.astype('float32') / 255
@@ -168,24 +166,6 @@ class Gan(object):
         return image_arrays
 
 
-def plot_images(fake_images, generator_path, iteration_nmr):
-    plt.figure(figsize=(5, 5))
-    num_images = fake_images.shape[0]
-
-    image_size = fake_images.shape[1]
-    rows = int(math.sqrt(fake_images.shape[0]))
-    print(image_size)
-
-    os.makedirs(generator_path + "/batches", exist_ok=True)
-    for j in range(num_images):
-        plt.subplot(rows, rows + 1, j + 1)
-        pltimg = np.reshape(fake_images[j], [image_size, image_size])
-        plt.imshow(pltimg, cmap='gray')
-        plt.axis('off')
-
-    plt.savefig(generator_path + "/batches/batch" + str(iteration_nmr) + ".png")
-
-
 class DistributedGan(object):
     def __init__(self, distribution_size, real_data, generator, discriminator):
         self.discriminator = discriminator
@@ -221,6 +201,7 @@ class DistributedGan(object):
         os.makedirs(generator_path, exist_ok=True)
 
         self.generator.save_weights(generator_path + '/weights.h5')
+        self.generator.save(generator_path+ '/model')
         with open(generator_path + '/architecture.json', 'w') as f:
             f.write(self.generator.to_json())
         k.utils.plot_model(self.generator, generator_path + '/graph.png', show_shapes=True)
@@ -247,6 +228,8 @@ class DistributedGan(object):
             pass
 
         self.discriminator.save_weights(discriminator_path + '/weights.h5')
+        self.discriminator.save(discriminator_path +'/model')
+
         with open(discriminator_path + '/architecture.json', 'w') as f:
             f.write(self.discriminator.to_json())
         k.utils.plot_model(self.discriminator, discriminator_path + '/graph.png', show_shapes=True)
@@ -326,13 +309,14 @@ def main():
 
     iteration_size = 1000
 
+    # to use loaded models use utils.load_discriminator(id) or utils.load_generator(id)
     generators = [make_generator_function(image_size=28, input_size=C.noise_dimension) for _ in range(generator_size)]
     discriminators = [make_discriminator_function(data_shape=(28, 28, 1,)) for _ in range(discriminator_size)]
 
     multi_distributed_gan = MultiDistributedGan(real_data, distribution_size, generators, discriminators)
 
     for i in range(iteration_size):
-        if i % 100 == 0:
+        if i % 10 == 0:
             multi_distributed_gan.save(i)
             print('iteration', i)
 
@@ -342,5 +326,6 @@ def main():
             multi_distributed_gan.train_on_batch_index(batch_index)
 
 
+
 if __name__ == '__main__':
-    main()
+   main()

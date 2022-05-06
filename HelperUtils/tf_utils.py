@@ -1,10 +1,9 @@
-import os
 import math
+import os
+
 import numpy as np
 from keras.models import load_model
-
 from matplotlib import pyplot as plt
-
 
 
 def plot_images(fake_images, generator_path, iteration_nmr):
@@ -31,17 +30,20 @@ def load_weights_predict(model, id, C):
     plot_images(image_array, C.path + '/generator ' + str(id) + '/loaded', id)
     plt.show()
 
+
 def load_model_predict(filename, id, C):
     noise = np.random.uniform(-1, 1, [16, C.noise_dimension])
-    model= load_model(filename)
+    model = load_model(filename)
     image_array = model.predict(noise)
     plot_images(image_array, C.path + '/generator ' + str(id) + '/loaded', id)
     plt.show()
 
+
 def load_discriminator(id, C):
-    model = load_model(C.path + '/discriminator ' + str(id) + '/discriminator/discriminator')
+    model = load_model(C.path + '/discriminator ' + str(id) + '/discriminator/model')
     return model
 
+
 def load_generator(id, C):
-    model = load_model(C.path + '/generator ' + str(id) + '/generator/generator')
+    model = load_model(C.path + '/generator ' + str(id) + '/generator/model')
     return model
