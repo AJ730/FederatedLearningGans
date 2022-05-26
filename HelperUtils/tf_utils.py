@@ -22,6 +22,23 @@ def plot_images(fake_images, generator_path, iteration_nmr):
 
     plt.savefig(generator_path + "/batches/batch" + str(iteration_nmr) + ".png")
 
+def plot_acc_images(fake_images):
+    plt.figure(figsize=(5, 5))
+    num_images = fake_images.shape[0]
+
+    image_size = fake_images.shape[1]
+    rows = int(math.sqrt(fake_images.shape[0]))
+
+
+    for j in range(num_images):
+        plt.subplot(rows, rows + 1, j + 1)
+        pltimg = np.reshape(fake_images[j], [image_size, image_size])
+        plt.imshow(pltimg, cmap='gray')
+        plt.axis('off')
+
+    plt.savefig("test.png")
+
+
 
 def load_weights_predict(model, id, C):
     noise = np.random.uniform(-1, 1, [16, C.noise_dimension])
