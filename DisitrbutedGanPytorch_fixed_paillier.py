@@ -13,13 +13,13 @@ from torch.utils.data import random_split
 import torchvision.utils as vutils
 from HelperUtils import py_utils
 import dill
-
+import phe as paillier
 
 MPI.pickle.__init__(dill.dumps, dill.loads)
 """ 
 We use dataLoader to get the images of the training set batch by batch.
 We ust the shuffle = True because we want to get the dataset in random order so that we can train model more precisely.
-We use num_worker = 2 which represent the number of thread and the worker servers to define the 
+We use num_worker = 5 which represent the number of thread and the worker servers to define the 
 """
 
 
@@ -148,12 +148,16 @@ if __name__ == '__main__':
                                     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)), ])
     comm = MPI.COMM_WORLD
     size = comm.Get_size()
+    print(size)
     rank = comm.Get_rank()
 
     batch_size = 128
 
     dataset = None
     dataloader = None
+
+    public_key = None
+    private_key = None
 
     if (rank == 0):
         dataset = dset.CIFAR10(root='./data', download=True, transform=transform)
@@ -166,8 +170,8 @@ if __name__ == '__main__':
         numpy_dataset_partition_per_client = random_split(dataset, [partition1, partition2, partition3])
 
         # recieving tag = 1
-        for i in range(1, clients):
-            comm.send(numpy_dataset_partition_per_client[i], i, tag=1)
+        for i in range(1, clients+1):
+            comm.send(numpy_dataset_partition_per_client[i-1], i, tag=1)
 
 
     else:
@@ -180,6 +184,26 @@ if __name__ == '__main__':
 
     comm.barrier()
     print("synchronised", flush=True)
+
+
+    # SEND PAILLIER KEY
+    if (rank == 4):
+        # recieving tag = 1
+        pub,priv = paillier.generate_paillier_keypair(n_length=2048)
+
+        for i in range(1, clients+1):
+            comm.send([pub,priv], i, tag=1)
+
+
+    if (rank!=4) and (rank!=0):
+        keys = comm.recv(source=MPI.ANY_SOURCE, tag=1)
+        public_key = keys[0]
+        private_key = keys[1]
+    
+
+
+    comm.barrier()
+
 
     netG = G()
     netD = D()
@@ -198,24 +222,24 @@ if __name__ == '__main__':
 
         global_weights_generator_init = comm.bcast(global_weights_generator_init, root=0)
         global_weights_discriminator_init = comm.bcast(global_weights_discriminator_init, root=0)
-        global_weights_generator = comm.bcast(global_weights_generator, root=0)
-        global_weights_discriminator = comm.bcast(global_weights_discriminator, root=0)
+        #global_weights_generator = comm.bcast(global_weights_generator, root=0)
+        #global_weights_discriminator = comm.bcast(global_weights_discriminator, root=0)
 
         print('generator_init', global_weights_generator_init, flush=True)
         print('generator',global_weights_generator, flush=True)
 
         comm.barrier()
 
-        if rank != 0:
+        if rank != 0 and rank !=4:
             print("epoch ", epoch, flush=True)
             # Creating the generator
 
             if(epoch == 0):
                 netG.apply(global_weights_generator_init)
                 netD.apply(global_weights_discriminator_init)
-            else:
-                netG.apply(global_weights_generator)
-                netD.apply(global_weights_discriminator)
+            #else:
+             #   netG.apply(global_weights_generator)
+              #  netD.apply(global_weights_discriminator)
 
             criterion = nn.BCELoss()
             optimizerD = optim.Adam(netD.parameters(), lr=0.0002, betas=(0.5, 0.999))
@@ -274,15 +298,38 @@ if __name__ == '__main__':
         comm.barrier()
         for param in netG.parameters():
             print("here", flush=True)
-            global_weights_generator = comm.reduce(param.data, MPI.SUM, root=0)
-            print('weights', global_weights_generator, flush=True)
+            p = 0
+            if(rank == 0 or rank == 4):
+                p = 0
+            else:
+                p = public_key.encrypt(param.data/clients)
+            global_weights_generator = comm.reduce(p, MPI.SUM, root=0)
+
+            if (rank == 0):
+                for i in range(1, clients+1):
+                    comm.send(global_weights_generator, i, tag=1)
+
+            if rank!=0 and rank!=4:
+                param.data = private_key.decrypt(comm.recv(source=MPI.ANY_SOURCE, tag=1))
+            comm.barrier()
 
 
         for param in netD.parameters():
             print("here2", flush=True)
-            global_weights_discriminator = comm.reduce(param.data,  MPI.SUM, root=0)
-            print('weights', global_weights_discriminator, flush=True)
+            p = 0
+            if(rank == 0 or rank == 4):
+                p = 0
+            else:
+                p = public_key.encrypt(param.data/clients)
+            global_weights_discriminator = comm.reduce(p,  MPI.SUM, root=0)
 
+            if (rank == 0):
+                for i in range(1, clients+1):
+                    comm.send(global_weights_discriminator, i, tag=1)
+
+            if rank!=0 and rank!=4:
+                param.data = private_key.decrypt(comm.recv(source=MPI.ANY_SOURCE, tag=1))
+            comm.barrier()
 
 
 
