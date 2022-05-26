@@ -148,6 +148,7 @@ if __name__ == '__main__':
                                     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)), ])
     comm = MPI.COMM_WORLD
     size = comm.Get_size()
+
     rank = comm.Get_rank()
 
     batch_size = 128
@@ -166,8 +167,8 @@ if __name__ == '__main__':
         numpy_dataset_partition_per_client = random_split(dataset, [partition1, partition2, partition3])
 
         # recieving tag = 1
-        for i in range(1, clients):
-            comm.send(numpy_dataset_partition_per_client[i], i, tag=1)
+        for i in range(1, clients+1):
+            comm.send(numpy_dataset_partition_per_client[i-1], i, tag=1)
 
 
     else:
@@ -176,7 +177,8 @@ if __name__ == '__main__':
 
         util = py_utils.Util(dataset, dataloader)
         device = util.get_default_device()
-        print("using:", device, flush=True)
+        #print("using:", device, flush=True)
+        print("%d",rank)
 
     comm.barrier()
     print("synchronised", flush=True)
@@ -187,7 +189,7 @@ if __name__ == '__main__':
     global_weights_generator = []
     global_weights_discriminator = []
 
-    for epoch in range(3):
+    for epoch in range(25):
 
         if (rank == 0) and epoch == 0:
             global_weights_generator_init = weights_init
@@ -198,8 +200,8 @@ if __name__ == '__main__':
 
         global_weights_generator_init = comm.bcast(global_weights_generator_init, root=0)
         global_weights_discriminator_init = comm.bcast(global_weights_discriminator_init, root=0)
-        global_weights_generator = comm.bcast(global_weights_generator, root=0)
-        global_weights_discriminator = comm.bcast(global_weights_discriminator, root=0)
+        #global_weights_generator = comm.bcast(global_weights_generator, root=0)
+        #global_weights_discriminator = comm.bcast(global_weights_discriminator, root=0)
 
         print('generator_init', global_weights_generator_init, flush=True)
         print('generator',global_weights_generator, flush=True)
@@ -213,9 +215,9 @@ if __name__ == '__main__':
             if(epoch == 0):
                 netG.apply(global_weights_generator_init)
                 netD.apply(global_weights_discriminator_init)
-            else:
-                netG.apply(global_weights_generator)
-                netD.apply(global_weights_discriminator)
+            #else:
+             #   netG.apply(global_weights_generator)
+              #  netD.apply(global_weights_discriminator)
 
             criterion = nn.BCELoss()
             optimizerD = optim.Adam(netD.parameters(), lr=0.0002, betas=(0.5, 0.999))
@@ -273,16 +275,39 @@ if __name__ == '__main__':
 
         comm.barrier()
         for param in netG.parameters():
-            print("here", flush=True)
-            global_weights_generator = comm.reduce(param.data, MPI.SUM, root=0)
-            print('weights', global_weights_generator, flush=True)
+            print("here", rank, flush=True)
+            p = 0
+            if(rank == 0):
+                p = 0
+            else:
+                p = param.data
+            global_weights_generator = comm.reduce(p/clients, MPI.SUM, root=0)
 
+            if (rank == 0):
+                for i in range(1, clients+1):
+                    comm.send(global_weights_generator, i, tag=1)
+
+            else:
+                param.data = comm.recv(source=MPI.ANY_SOURCE, tag=1)
+
+            comm.barrier()
 
         for param in netD.parameters():
-            print("here2", flush=True)
-            global_weights_discriminator = comm.reduce(param.data,  MPI.SUM, root=0)
-            print('weights', global_weights_discriminator, flush=True)
+            print("here2",rank, flush=True)
+            p = 0
+            if(rank == 0):
+                p = 0
+            else:
+                p = param.data
+            global_weights_discriminator = comm.reduce(p/clients,  MPI.SUM, root=0)
 
+            if (rank == 0):
+                for i in range(1, clients+1):
+                    comm.send(global_weights_discriminator, i, tag=1)
 
+            else:
+                param.data = comm.recv(source=MPI.ANY_SOURCE, tag=1)
+
+            comm.barrier()
 
 

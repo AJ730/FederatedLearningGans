@@ -13,7 +13,7 @@ import torch.utils.data
 import torchvision.utils as vutils
 from torchvision.utils import make_grid
 from keras.models import load_model
-from DistributedGanTensorflow import C
+from DistributedGanGPUTensorflow import C
 
 
 class Util:
