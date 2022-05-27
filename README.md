@@ -6,11 +6,11 @@ This project is an adaptation of https://arxiv.org/abs/1811.03850 and novel encr
 ![architecture](./architecture/archs.png)
 
 
-##Experiments
+## Experiments
 
 
-###Distributed Federated Learning
-####Prerequisites
+### Distributed Federated Learning
+#### Prerequisites
 - MPI
 - Cifar10
 - GPU
@@ -31,9 +31,9 @@ This project is an adaptation of https://arxiv.org/abs/1811.03850 and novel encr
 
 
 
-###Distributed Federated Learning 
+### Distributed Federated Learning 
 
-####Prerequisites
+#### Prerequisites
 - Ray
 - MNIST
 - FMNIST
@@ -55,8 +55,8 @@ This project is an adaptation of https://arxiv.org/abs/1811.03850 and novel encr
 
 
 
-###Offline Distributed Federated Learning 
-####Prerequisites
+### Offline Distributed Federated Learning 
+#### Prerequisites
 - MNIST
 - FMNIST
 - Tensorflow
@@ -74,8 +74,8 @@ This project is an adaptation of https://arxiv.org/abs/1811.03850 and novel encr
 #### Results
 
 
-###Encryted Federated Learning 
-####Prerequisites
+### Encryted Federated Learning 
+#### Prerequisites
 - MPI
 - Cifar10
 - GPU
