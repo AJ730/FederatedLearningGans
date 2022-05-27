@@ -5,7 +5,7 @@ from tensorflow import keras as k
 import tensorflow as tf
 from keras.preprocessing import image
 
-from HelperUtils.tf_utils import *
+from helperUtils.tf_utils import *
 
 configuration = tf.compat.v1.ConfigProto()
 configuration.gpu_options.allow_growth = True

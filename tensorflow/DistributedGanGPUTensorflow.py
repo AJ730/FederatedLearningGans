@@ -7,14 +7,16 @@ from matplotlib import pyplot as plt
 from tensorflow import keras as k
 from tensorflow.keras.preprocessing import image
 
-from HelperUtils.tf_utils import plot_images
+from helperUtils.tf_utils import plot_images
 
 configuration = tf.compat.v1.ConfigProto()
 configuration.gpu_options.allow_growth = True
 session = tf.compat.v1.Session(config=configuration)
 
-
-tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.5)
+os.environ['RAY_worker_register_timeout_seconds'] = '60'
+os.environ['RAY_max_direct_call_object_size'] = '0'
+gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)
+sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
 for gpu in gpus:
@@ -105,7 +107,7 @@ class C(object):
     batch_size = 64
     learning_rate = 2e-4
     decay = 6e-8
-    path = './results'
+    path = '../results'
     generate_image_size = 16
 
 
@@ -178,7 +180,7 @@ class Gan(object):
 
         return image_arrays
 
-@ray.remote(num_cpus = 1)
+@ray.remote(num_gpus = 0.5)
 class DistributedGan(object):
 
     def __init__(self, distribution_size, real_data, generator, discriminator):
@@ -319,11 +321,11 @@ def main():
     make_generator_function = C.make_fixed_generator
     make_discriminator_function = C.make_fixed_discriminator
 
-    generator_size = 1
+    generator_size = 2
 
-    discriminator_size = 1
+    discriminator_size = 2
 
-    distribution_size = 2  # Change this for each client
+    distribution_size = 5  # Change this for each client
 
     iteration_size = 100
 

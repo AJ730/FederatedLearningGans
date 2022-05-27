@@ -1,36 +1,99 @@
-# DistributedGAN
+# Federated-Distributed-GAN
 
-_This project is an adaptation of https://arxiv.org/abs/1811.03850_
+This project is an adaptation of https://arxiv.org/abs/1811.03850 and novel encryption based solutions.
 
-**Software**
-- Tensorflow
-- Pytorch
-- Mpi4py
-- Ray. 
+##Supported Architectures
+![architecture](./architecture/archs.png)
 
 
-**Dataset**
-- Minst
-- Eminst
+##Experiments
+
+
+###Distributed Federated Learning
+####Prerequisites
+- MPI
 - Cifar10
+- GPU
+- Pytorch
+
+#### Architecture Support
+- FLGAN
 
 
-usage:
+#### How to run?
+ - `run pip install pytorch_requirements.txt`
+ - `run command 'mpiexec -n 3 pytorch/DistributedGanPytorch_fixedpy' from riit`
+#### Limitations
+   - `Currently only works for 3 clients`
 
-    - run pip install pytorch_requirements.txt
-    - run main file in DistributedGanPytorch
-    
-                            or
-    
-    - run pip install tensorflow_requirements.txt
-    - run main file in DistributedGanTensorflow
+#### Results
 
 
 
-# Architecture
 
-![architecture](./architecture/FLGAN.png)
-    
-![architecture](./architecture/MDGAN.png)
+###Distributed Federated Learning 
+
+####Prerequisites
+- Ray
+- MNIST
+- FMNIST
+- GPU
+- CPU
+- Tensorflow
+
+#### Architecture Support
+- FLGAN
+- MDGAN
+- MULTI-FLGAN
+
+#### How to run?
+ - `run pip install tensorflow_requirements.txt`
+ - `update the distribution, generator and discriminator size in tensorflow/DistrubtedGanTensorflow.py`
+ - `run main.py`
+
+#### Results
+
+
+
+###Offline Distributed Federated Learning 
+####Prerequisites
+- MNIST
+- FMNIST
+- Tensorflow
+
+#### Architecture Support
+- FLGAN
+- MDGAN
+- MULTI-FLGAN
+
+#### How to run?
+ - `run pip install tensorflow_requirements.txt`
+ - `update the distribution, generator and discriminator size in offline-Federaredlearning/DistrubtedGanTensorflow.py`
+ - `run main.py`
+
+#### Results
+
+
+###Encryted Federated Learning 
+####Prerequisites
+- MPI
+- Cifar10
+- GPU
+- Pytorch
+
+#### Architecture Support
+- FLGAN
+
+#### How to run?
+ - `run pip install pytorch_requirements.txt`
+ - `run command 'mpiexec -n 3 'pytorch/DistributedGanPytorch_fixed_pailier.py'`
+#### Limitations
+   - `Currently only works for 3 clients`
+
+#### Results
+
+
+### HPC support 
+ - `run the commands under slurm`
 
 

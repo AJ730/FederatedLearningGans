@@ -11,15 +11,15 @@ from torch import optim
 from torch.autograd import Variable
 from torch.utils.data import random_split
 import torchvision.utils as vutils
-from HelperUtils import py_utils
+from helperUtils import py_utils
 import dill
-
+import phe as paillier
 
 MPI.pickle.__init__(dill.dumps, dill.loads)
 """ 
 We use dataLoader to get the images of the training set batch by batch.
 We ust the shuffle = True because we want to get the dataset in random order so that we can train model more precisely.
-We use num_worker = 2 which represent the number of thread and the worker servers to define the 
+We use num_worker = 5 which represent the number of thread and the worker servers to define the 
 """
 
 
@@ -148,13 +148,16 @@ if __name__ == '__main__':
                                     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)), ])
     comm = MPI.COMM_WORLD
     size = comm.Get_size()
-
+    print(size)
     rank = comm.Get_rank()
 
     batch_size = 128
 
     dataset = None
     dataloader = None
+
+    public_key = None
+    private_key = None
 
     if (rank == 0):
         dataset = dset.CIFAR10(root='./data', download=True, transform=transform)
@@ -177,11 +180,30 @@ if __name__ == '__main__':
 
         util = py_utils.Util(dataset, dataloader)
         device = util.get_default_device()
-        #print("using:", device, flush=True)
-        print("%d",rank)
+        print("using:", device, flush=True)
 
     comm.barrier()
     print("synchronised", flush=True)
+
+
+    # SEND PAILLIER KEY
+    if (rank == 4):
+        # recieving tag = 1
+        pub,priv = paillier.generate_paillier_keypair(n_length=2048)
+
+        for i in range(1, clients+1):
+            comm.send([pub,priv], i, tag=1)
+
+
+    if (rank!=4) and (rank!=0):
+        keys = comm.recv(source=MPI.ANY_SOURCE, tag=1)
+        public_key = keys[0]
+        private_key = keys[1]
+    
+
+
+    comm.barrier()
+
 
     netG = G()
     netD = D()
@@ -189,7 +211,7 @@ if __name__ == '__main__':
     global_weights_generator = []
     global_weights_discriminator = []
 
-    for epoch in range(25):
+    for epoch in range(3):
 
         if (rank == 0) and epoch == 0:
             global_weights_generator_init = weights_init
@@ -208,7 +230,7 @@ if __name__ == '__main__':
 
         comm.barrier()
 
-        if rank != 0:
+        if rank != 0 and rank !=4:
             print("epoch ", epoch, flush=True)
             # Creating the generator
 
@@ -275,39 +297,39 @@ if __name__ == '__main__':
 
         comm.barrier()
         for param in netG.parameters():
-            print("here", rank, flush=True)
+            print("here", flush=True)
             p = 0
-            if(rank == 0):
+            if(rank == 0 or rank == 4):
                 p = 0
             else:
-                p = param.data
-            global_weights_generator = comm.reduce(p/clients, MPI.SUM, root=0)
+                p = public_key.encrypt(param.data/clients)
+            global_weights_generator = comm.reduce(p, MPI.SUM, root=0)
 
             if (rank == 0):
                 for i in range(1, clients+1):
                     comm.send(global_weights_generator, i, tag=1)
 
-            else:
-                param.data = comm.recv(source=MPI.ANY_SOURCE, tag=1)
-
+            if rank!=0 and rank!=4:
+                param.data = private_key.decrypt(comm.recv(source=MPI.ANY_SOURCE, tag=1))
             comm.barrier()
 
+
         for param in netD.parameters():
-            print("here2",rank, flush=True)
+            print("here2", flush=True)
             p = 0
-            if(rank == 0):
+            if(rank == 0 or rank == 4):
                 p = 0
             else:
-                p = param.data
-            global_weights_discriminator = comm.reduce(p/clients,  MPI.SUM, root=0)
+                p = public_key.encrypt(param.data/clients)
+            global_weights_discriminator = comm.reduce(p,  MPI.SUM, root=0)
 
             if (rank == 0):
                 for i in range(1, clients+1):
                     comm.send(global_weights_discriminator, i, tag=1)
 
-            else:
-                param.data = comm.recv(source=MPI.ANY_SOURCE, tag=1)
-
+            if rank!=0 and rank!=4:
+                param.data = private_key.decrypt(comm.recv(source=MPI.ANY_SOURCE, tag=1))
             comm.barrier()
+
 
 

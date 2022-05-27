@@ -1,5 +1,5 @@
 # Deep Convolutional GANs
-
+from Pyfhel import Pyfhel
 import torch
 import torch.nn as nn
 import torch.nn.parallel
@@ -11,7 +11,7 @@ from torch import optim
 from torch.autograd import Variable
 from torch.utils.data import random_split
 import torchvision.utils as vutils
-from HelperUtils import py_utils
+from helperUtils import py_utils
 import dill
 import phe as paillier
 
@@ -186,19 +186,33 @@ if __name__ == '__main__':
     print("synchronised", flush=True)
 
 
-    # SEND PAILLIER KEY
+    # SEND PYFHEL KEY
     if (rank == 4):
         # recieving tag = 1
-        pub,priv = paillier.generate_paillier_keypair(n_length=2048)
+        HE = Pyfhel()      
+        ckks_params = {
+            'scheme': 'CKKS',   # can also be 'ckks'
+            'n': 2**14,         # Polynomial modulus degree. For CKKS, n/2 values can be
+                        #  encoded in a single ciphertext. 
+                        #  Typ. 2^D for D in [10, 16]
+            'scale': 2**30,     # All the encodings will use it for float->fixed point
+                        #  conversion: x_fix = round(x_float * scale)
+                        #  You can use this as default scale or use a different
+                        #  scale on each operation (set in HE.encryptFrac)
+            'qi': [60, 30, 30, 30, 60] # Number of bits of each prime in the chain. 
+                        # Intermediate values should be  close to log2(scale)
+                        # for each operation, to have small rounding errors.
+        }
+        HE.contextGen(**ckks_params)  # Generate context for bfv scheme
+        HE.keyGen()             # Key Generation: generates a pair of public/secret keys
 
         for i in range(1, clients+1):
-            comm.send([pub,priv], i, tag=1)
+            comm.send(HE, i, tag=1)
 
 
     if (rank!=4) and (rank!=0):
-        keys = comm.recv(source=MPI.ANY_SOURCE, tag=1)
-        public_key = keys[0]
-        private_key = keys[1]
+        HE = comm.recv(source=MPI.ANY_SOURCE, tag=1)
+        
     
 
 
@@ -302,7 +316,7 @@ if __name__ == '__main__':
             if(rank == 0 or rank == 4):
                 p = 0
             else:
-                p = public_key.encrypt(param.data/clients)
+                p = HE.encrypt(param.data/clients)
             global_weights_generator = comm.reduce(p, MPI.SUM, root=0)
 
             if (rank == 0):
@@ -310,7 +324,7 @@ if __name__ == '__main__':
                     comm.send(global_weights_generator, i, tag=1)
 
             if rank!=0 and rank!=4:
-                param.data = private_key.decrypt(comm.recv(source=MPI.ANY_SOURCE, tag=1))
+                param.data = HE.decrypt(comm.recv(source=MPI.ANY_SOURCE, tag=1))
             comm.barrier()
 
 
@@ -320,7 +334,7 @@ if __name__ == '__main__':
             if(rank == 0 or rank == 4):
                 p = 0
             else:
-                p = public_key.encrypt(param.data/clients)
+                p = HE.encrypt(param.data/clients)
             global_weights_discriminator = comm.reduce(p,  MPI.SUM, root=0)
 
             if (rank == 0):
@@ -328,7 +342,7 @@ if __name__ == '__main__':
                     comm.send(global_weights_discriminator, i, tag=1)
 
             if rank!=0 and rank!=4:
-                param.data = private_key.decrypt(comm.recv(source=MPI.ANY_SOURCE, tag=1))
+                param.data = HE.decrypt(comm.recv(source=MPI.ANY_SOURCE, tag=1))
             comm.barrier()
 
 

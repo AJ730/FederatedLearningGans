@@ -2,7 +2,6 @@
 from __future__ import print_function
 
 # %matplotlib inline
-import math
 import os
 
 import matplotlib.pyplot as plt
@@ -12,8 +11,6 @@ import torch.nn.parallel
 import torch.utils.data
 import torchvision.utils as vutils
 from torchvision.utils import make_grid
-from keras.models import load_model
-from DistributedGanGPUTensorflow import C
 
 
 class Util:
