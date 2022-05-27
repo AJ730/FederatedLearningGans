@@ -22,7 +22,7 @@ This project is an adaptation of https://arxiv.org/abs/1811.03850 and novel encr
 
 #### How to run?
  - `run pip install pytorch_requirements.txt`
- - `run command 'mpiexec -n 3 pytorch/DistributedGanPytorch_fixedpy' from riit`
+ - `run command 'mpiexec -n 3 pytorch/DistributedGanPytorch_fixedpy' from root`
 #### Limitations
    - `Currently only works for 3 clients`
 
