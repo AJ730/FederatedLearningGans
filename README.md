@@ -2,7 +2,7 @@
 
 This project is an adaptation of https://arxiv.org/abs/1811.03850 and novel encryption based solutions.
 
-##Supported Architectures
+## Supported Architectures
 ![architecture](./architecture/archs.png)
 
 
