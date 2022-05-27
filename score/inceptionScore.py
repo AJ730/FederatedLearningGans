@@ -8,6 +8,8 @@ from numpy import log
 from numpy import mean
 from numpy import std
 
+from helperUtils.tf_utils import *
+
 
 def calculate_inception_score(images, n_split=10, eps=1E-16):
     # load inception v3 model
@@ -40,3 +42,7 @@ def calculate_inception_score(images, n_split=10, eps=1E-16):
     # average across images
     is_avg, is_std = mean(scores), std(scores)
     return is_avg, is_std
+
+
+if __name__ == '__main__':
+    load_generator_result(0, '../results_federated_learning_tf', 'MNIST', offline=True, architecure='MDGAN', clients=2)

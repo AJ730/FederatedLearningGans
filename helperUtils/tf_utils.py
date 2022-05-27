@@ -22,13 +22,13 @@ def plot_images(fake_images, generator_path, iteration_nmr):
 
     plt.savefig(generator_path + "/batches/batch" + str(iteration_nmr) + ".png")
 
+
 def plot_acc_images(fake_images):
     plt.figure(figsize=(5, 5))
     num_images = fake_images.shape[0]
 
     image_size = fake_images.shape[1]
     rows = int(math.sqrt(fake_images.shape[0]))
-
 
     for j in range(num_images):
         plt.subplot(rows, rows + 1, j + 1)
@@ -37,7 +37,6 @@ def plot_acc_images(fake_images):
         plt.axis('off')
 
     plt.savefig("test.png")
-
 
 
 def load_weights_predict(model, id, C):
@@ -63,4 +62,41 @@ def load_discriminator(id, C):
 
 def load_generator(id, C):
     model = load_model(C.path + '/generator ' + str(id) + '/generator/model')
+    return model
+
+
+def parseOff(offline):
+    if (offline):
+        return 'Offline'
+    else:
+        return 'Online'
+
+
+def parseGan(architecure, clients):
+    if (architecure == 'FLGAN'):
+        return '/FL' + '/FL' + str(clients)
+    if (architecure == 'MDGAN'):
+        return '/MDGAN/' + str(clients)
+    if (architecure == 'MULTIFLGAN'):
+        return '/MULTIFLGAN/' + str(clients)
+    else:
+        raise Exception("architecure and clients not found :" + architecure + " :" + clients)
+
+
+def load_generator_result(id, root, dataset, offline=False, architecure='FLGAN', clients=2):
+    dirPath = root + '/' + dataset + '/' + parseOff(offline)  + parseGan(architecure, clients)
+    rootPath = dirPath+'/results'
+
+    print(rootPath)
+
+    model = load_model(rootPath + '/generator ' + str(id) + '/generator/model')
+    return model
+
+def load_discriminator_result(id, root, dataset, offline=False, architecure='FLGAN', clients=2):
+    dirPath = root + '/' + dataset + '/' + parseOff(offline)  + parseGan(architecure, clients)
+    rootPath = dirPath+'/results'
+
+    print(rootPath)
+
+    model = load_model(rootPath + '/discriminator ' + str(id) + '/discriminator/model')
     return model

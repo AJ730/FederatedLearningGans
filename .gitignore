@@ -2,3 +2,5 @@
 Offline-Federatedlearning/results
 /data
 /results/*
+/results_federated_learning_tf/*
+/results_federated_learning_pt/*
