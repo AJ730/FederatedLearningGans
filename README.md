@@ -2,15 +2,15 @@
 
 This project is an adaptation of https://arxiv.org/abs/1811.03850 and novel encryption based solutions.
 
-##Supported Architectures
+## Supported Architectures
 ![architecture](./architecture/archs.png)
 
 
-##Experiments
+## Experiments
 
 
-###Distributed Federated Learning
-####Prerequisites
+### Distributed Federated Learning
+#### Prerequisites
 - MPI
 - Cifar10
 - GPU
@@ -22,7 +22,7 @@ This project is an adaptation of https://arxiv.org/abs/1811.03850 and novel encr
 
 #### How to run?
  - `run pip install pytorch_requirements.txt`
- - `run command 'mpiexec -n 3 pytorch/DistributedGanPytorch_fixedpy' from riit`
+ - `run command 'mpiexec -n 3 pytorch/DistributedGanPytorch_fixedpy' from root`
 #### Limitations
    - `Currently only works for 3 clients`
 
@@ -31,9 +31,9 @@ This project is an adaptation of https://arxiv.org/abs/1811.03850 and novel encr
 
 
 
-###Distributed Federated Learning 
+### Distributed Federated Learning 
 
-####Prerequisites
+#### Prerequisites
 - Ray
 - MNIST
 - FMNIST
@@ -55,8 +55,8 @@ This project is an adaptation of https://arxiv.org/abs/1811.03850 and novel encr
 
 
 
-###Offline Distributed Federated Learning 
-####Prerequisites
+### Offline Distributed Federated Learning 
+#### Prerequisites
 - MNIST
 - FMNIST
 - Tensorflow
@@ -74,8 +74,8 @@ This project is an adaptation of https://arxiv.org/abs/1811.03850 and novel encr
 #### Results
 
 
-###Encryted Federated Learning 
-####Prerequisites
+### Encryted Federated Learning 
+#### Prerequisites
 - MPI
 - Cifar10
 - GPU
