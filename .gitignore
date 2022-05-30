@@ -4,3 +4,4 @@ Offline-Federatedlearning/results
 /results/*
 /results_federated_learning_tf/*
 /results_federated_learning_pt/*
+/score/generated_imgs/*

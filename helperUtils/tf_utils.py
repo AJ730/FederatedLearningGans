@@ -74,7 +74,7 @@ def parseOff(offline):
 
 def parseGan(architecure, clients):
     if (architecure == 'FLGAN'):
-        return '/FL' + '/FL' + str(clients)
+        return '/FLGAN' + '/FL' + str(clients)
     if (architecure == 'MDGAN'):
         return '/MDGAN/' + str(clients)
     if (architecure == 'MULTIFLGAN'):
@@ -85,9 +85,11 @@ def parseGan(architecure, clients):
 
 def load_generator_result(id, root, dataset, offline=False, architecure='FLGAN', clients=2):
     dirPath = root + '/' + dataset + '/' + parseOff(offline)  + parseGan(architecure, clients)
-    rootPath = dirPath+'/results'
+    rootPath = dirPath + '/results'
+    if not offline:
+        rootPath = dirPath + '/slurm scripts/results'
 
-    print(rootPath)
+    print('path: '+ rootPath)
 
     model = load_model(rootPath + '/generator ' + str(id) + '/generator/model')
     return model
@@ -100,3 +102,4 @@ def load_discriminator_result(id, root, dataset, offline=False, architecure='FLG
 
     model = load_model(rootPath + '/discriminator ' + str(id) + '/discriminator/model')
     return model
+
