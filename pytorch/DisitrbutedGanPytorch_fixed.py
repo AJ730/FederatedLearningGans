@@ -1,5 +1,5 @@
 # Deep Convolutional GANs
-
+import time
 import torch
 import torch.nn as nn
 import torch.nn.parallel
@@ -11,10 +11,11 @@ from torch import optim
 from torch.autograd import Variable
 from torch.utils.data import random_split
 import torchvision.utils as vutils
-from helperUtils import py_utils
+from HelperUtils import py_utils
 import dill
-
-
+import numpy
+from sys import getsizeof
+import matplotlib.pyplot as plt 
 MPI.pickle.__init__(dill.dumps, dill.loads)
 """ 
 We use dataLoader to get the images of the training set batch by batch.
@@ -136,6 +137,8 @@ class D(nn.Module):
 
 
 if __name__ == '__main__':
+    t = time.time()
+    times = []
     #
     # # Creating the network to create the peer2peer connection for swaping of the Discriminator
     batchSize = 64  # We set the size of the batch.
@@ -146,6 +149,9 @@ if __name__ == '__main__':
     # Creating the transformations
     transform = transforms.Compose([transforms.Resize(imageSize), transforms.ToTensor(),
                                     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)), ])
+    #transform = transforms.Compose([transforms.Resize(imageSize), transforms.ToTensor(),
+     #                               transforms.Normalize((0.5,), (0.5,)), ])    
+
     comm = MPI.COMM_WORLD
     size = comm.Get_size()
 
@@ -189,7 +195,10 @@ if __name__ == '__main__':
     global_weights_generator = []
     global_weights_discriminator = []
 
-    for epoch in range(25):
+
+    G_losses = []
+    D_losses = []
+    for epoch in range(50):
 
         if (rank == 0) and epoch == 0:
             global_weights_generator_init = weights_init
@@ -261,10 +270,11 @@ if __name__ == '__main__':
                 optimizerG.step()
 
                 # 3rd Step: Printing the losses and saving the real images and the generated images of the minibatch every 100 steps
-
+                G_losses.append(errG.item())
+                D_losses.append(errD.item())
                 print(
                     '[%d/%d][%d/%d] Loss_D: %.4f Loss_G: %.4f' % (
-                    epoch, 25, i, len(dataloader), errD.item(), errG.item()),
+                    epoch, 50, i, len(dataloader), errD.item(), errG.item()),
                     flush=True)
 
                 if i % 100 == 0:
@@ -274,8 +284,13 @@ if __name__ == '__main__':
                                       normalize=True)
 
         comm.barrier()
+        count = 0 ;
+        print(getsizeof(netG.parameters()))
         for param in netG.parameters():
-            print("here", rank, flush=True)
+            b = param.data.numpy()
+            print("GENERATOR SHAPE")
+            print(numpy.shape(b))
+            #print("here", rank, flush=True)
             p = 0
             if(rank == 0):
                 p = 0
@@ -291,8 +306,14 @@ if __name__ == '__main__':
                 param.data = comm.recv(source=MPI.ANY_SOURCE, tag=1)
 
             comm.barrier()
-
+        
+            
         for param in netD.parameters():
+            b = param.data.numpy()
+            print("DISCRIMINATOR SHAPE")
+            print(numpy.shape(b))
+
+            count = count+1
             print("here2",rank, flush=True)
             p = 0
             if(rank == 0):
@@ -309,5 +330,18 @@ if __name__ == '__main__':
                 param.data = comm.recv(source=MPI.ANY_SOURCE, tag=1)
 
             comm.barrier()
+        if(epoch%10 == 0):
+            times.append(time.time() - t)
 
+    for i in times:
+        print(i)
 
+    if rank == 1:
+        plt.figure(figsize=(10,5))
+        plt.title("Generator and Discriminator Loss During Training")
+        plt.plot(G_losses,label="G")
+        plt.plot(D_losses,label="D")
+        plt.xlabel("iterations")
+        plt.ylabel("Loss")
+        plt.legend()
+        plt.show()   

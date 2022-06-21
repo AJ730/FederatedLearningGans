@@ -11,10 +11,10 @@ from torch import optim
 from torch.autograd import Variable
 from torch.utils.data import random_split
 import torchvision.utils as vutils
-from helperUtils import py_utils
+from HelperUtils import py_utils
 import dill
 import phe as paillier
-
+import numpy as np
 MPI.pickle.__init__(dill.dumps, dill.loads)
 """ 
 We use dataLoader to get the images of the training set batch by batch.
@@ -174,7 +174,7 @@ if __name__ == '__main__':
             comm.send(numpy_dataset_partition_per_client[i-1], i, tag=1)
 
 
-    else:
+    if rank!=0 and rank!=4:
         dataset = comm.recv(source=MPI.ANY_SOURCE, tag=1)
         dataloader = torch.utils.data.DataLoader(dataset, shuffle=True, batch_size=batch_size)
 
@@ -194,7 +194,8 @@ if __name__ == '__main__':
         for i in range(1, clients+1):
             comm.send([pub,priv], i, tag=1)
 
-
+    public_key = None
+    private_key = None
     if (rank!=4) and (rank!=0):
         keys = comm.recv(source=MPI.ANY_SOURCE, tag=1)
         public_key = keys[0]
@@ -296,39 +297,81 @@ if __name__ == '__main__':
                                       normalize=True)
 
         comm.barrier()
+
+        if (rank==1):
+            print(netG.parameters().size())
         for param in netG.parameters():
             print("here", flush=True)
-            p = 0
+            b = param.data.numpy()
+            print(np.shape(b))
+            c = []
+            print("step one %d", rank)
             if(rank == 0 or rank == 4):
-                p = 0
+                for x in np.nditer(b):
+                    c.append(0)
+
+                
             else:
-                p = public_key.encrypt(param.data/clients)
-            global_weights_generator = comm.reduce(p, MPI.SUM, root=0)
+                c = []
+
+                for x in np.nditer(b):
+                    c.append(public_key.encrypt(x.item()/clients))
+                
+
+            print("step two %d",rank)
+            global_weights_generator = comm.reduce(c, MPI.SUM, root=0)
 
             if (rank == 0):
                 for i in range(1, clients+1):
                     comm.send(global_weights_generator, i, tag=1)
-
+            print("step three %d", rank) 
             if rank!=0 and rank!=4:
-                param.data = private_key.decrypt(comm.recv(source=MPI.ANY_SOURCE, tag=1))
+                e = comm.recv(source=MPI.ANY_SOURCE, tag=1)
+                d = []
+
+                for x in np.nditer(e, flags = ["refs_ok"]):
+                    d.append(private_key.decrypt(x.item()))
+                d = np.reshape(d,np.shape(b))
+                
+                param.data = th.tensor(d)
+            print("step 4 %d",rank) 
             comm.barrier()
 
 
         for param in netD.parameters():
             print("here2", flush=True)
-            p = 0
+            b = param.data.numpy()
+            c = []
             if(rank == 0 or rank == 4):
-                p = 0
+                for x in np.nditer(b):
+                    c.append(0)
+
+                
             else:
-                p = public_key.encrypt(param.data/clients)
-            global_weights_discriminator = comm.reduce(p,  MPI.SUM, root=0)
+                c = []
+
+                for x in np.nditer(b):
+                    print(x.item())
+                    c.append(public_key.encrypt(x.item()/clients))
+              
+
+
+            global_weights_discriminator = comm.reduce(c, MPI.SUM, root=0)
 
             if (rank == 0):
                 for i in range(1, clients+1):
                     comm.send(global_weights_discriminator, i, tag=1)
 
             if rank!=0 and rank!=4:
-                param.data = private_key.decrypt(comm.recv(source=MPI.ANY_SOURCE, tag=1))
+                e = comm.recv(source=MPI.ANY_SOURCE, tag=1)
+                d = []
+
+                for x in np.nditer(e, flags = ["refs_ok"]):
+                    d.append(private_key.decrypt(x.item()))
+                d = np.reshape(d,np.shape(b))
+                
+                param.data = th.tensor(d)
+
             comm.barrier()
 
 
