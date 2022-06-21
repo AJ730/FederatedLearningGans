@@ -22,7 +22,7 @@ This project is an adaptation of https://arxiv.org/abs/1811.03850 and novel encr
 
 #### How to run?
  - `run pip install pytorch_requirements.txt`
- - `run command 'mpiexec -n 3 pytorch/DistributedGanPytorch_fixedpy' from root`
+ - `run command 'mpiexec -n 3 pytorch/DistributedGanPytorch_fixed.py' from root`for classic FL-GAN
 #### Limitations
    - `Currently only works for 3 clients`
 
@@ -86,9 +86,10 @@ This project is an adaptation of https://arxiv.org/abs/1811.03850 and novel encr
 
 #### How to run?
  - `run pip install pytorch_requirements.txt`
- - `run command 'mpiexec -n 3 'pytorch/DistributedGanPytorch_fixed_pailier.py'`
+ - `run command 'mpiexec -n 3 pytorch/DistributedGanPytorch_fixed_paillier.py' from root`for FL-GAN with additive homomorphic encryption
+ - `run command 'mpiexec -n 3 pytorch/DistributedGanPytorch_fixed_crypten.py' from root`for FL-GAN with multi-party computation
 #### Limitations
-   - `Currently only works for 3 clients`
+   - `Currently only works for 3 clients
 
 #### Results
 
