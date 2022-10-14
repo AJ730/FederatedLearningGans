@@ -11,7 +11,7 @@ configuration = tf.compat.v1.ConfigProto()
 configuration.gpu_options.allow_growth = True
 session = tf.compat.v1.Session(config=configuration)
 
-
+#Extension of https://github.com/bbondd/DistributedGAN
 class Data(object):
     def load_mnist(self):
         (real_data, _), (_, _) = tf.keras.datasets.mnist.load_data()
